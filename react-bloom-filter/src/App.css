@@ -1,0 +1,122 @@
+#root {
+  max-width: 1280px;
+  margin: 0 auto;
+  padding: 2rem;
+  text-align: center;
+}
+
+.logo {
+  height: 6em;
+  padding: 1.5em;
+  will-change: filter;
+  transition: filter 300ms;
+}
+.logo:hover {
+  filter: drop-shadow(0 0 2em #646cffaa);
+}
+.logo.react:hover {
+  filter: drop-shadow(0 0 2em #61dafbaa);
+}
+
+@keyframes logo-spin {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  a:nth-of-type(2) .logo {
+    animation: logo-spin infinite 20s linear;
+  }
+}
+
+.card {
+  padding: 2em;
+}
+
+.read-the-docs {
+  color: #888;
+}
+
+/* Main container */
+.bloom-filter-container {
+  max-width: 1100px;
+  margin: 0 auto;
+  background-color: white;
+  border-radius: 12px;
+  box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+  padding: 30px;
+  color: #333;
+}
+
+/* Main content sections */
+.visualization-section {
+  margin-bottom: 30px;
+}
+
+.visualization-section h2 {
+  position: sticky;
+  top: 0;
+  background-color: white;
+  z-index: 10;
+  padding: 10px 0;
+  margin: 0;
+  color: #2c3e50;
+}
+
+.interaction-section {
+  display: flex;
+  gap: 30px;
+  margin-bottom: 40px;
+}
+
+.info-section {
+  background-color: #f9f9f9;
+  padding: 20px;
+  border-radius: 8px;
+  font-size: 0.95rem;
+  margin-top: 30px;
+}
+
+.info-section h2 {
+  color: #2c3e50;
+  margin-bottom: 15px;
+}
+
+.info-section p {
+  margin-bottom: 15px;
+  line-height: 1.6;
+}
+
+/* History view */
+.history-view {
+  padding: 20px;
+}
+
+h1 {
+  text-align: center;
+  color: #2c3e50;
+  margin-bottom: 30px;
+  font-size: 2.5rem;
+}
+
+h2 {
+  color: #2c3e50;
+  margin-bottom: 20px;
+  font-size: 1.7rem;
+}
+
+/* Responsive design */
+@media (max-width: 768px) {
+  .interaction-section {
+    flex-direction: column;
+  }
+  
+  .bloom-filter-container {
+    padding: 15px;
+    margin: 10px;
+  }
+}

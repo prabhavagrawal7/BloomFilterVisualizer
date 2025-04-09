@@ -1,0 +1,16 @@
+.animationArea {
+  height: 120px;
+  margin-bottom: 20px;
+  position: relative;
+  background-color: #f9f9f9;
+  border-radius: 8px;
+  overflow: hidden;
+}
+
+.hashVisualization {
+  display: flex;
+  justify-content: space-around;
+  align-items: center;
+  height: 100%;
+  width: 100%;
+}
