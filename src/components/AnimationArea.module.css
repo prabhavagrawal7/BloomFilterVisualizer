@@ -4,7 +4,7 @@
   position: relative;
   background-color: #f9f9f9;
   border-radius: 8px;
-  overflow: hidden;
+  overflow: visible; /* Changed from 'hidden' to 'visible' to allow animation lines to extend outside */
 }
 
 .hashVisualization {

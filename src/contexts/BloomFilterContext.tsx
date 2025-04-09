@@ -90,16 +90,23 @@ export const BloomFilterProvider: React.FC<BloomFilterProviderProps> = ({
     if (bloomFilterRef.current.add(word)) {
       updateFilterState();
       
-      // Add to history
-      historyManagerRef.current.addEntry(
+      // Get hash positions for animation
+      const positions = bloomFilterRef.current.getHashPositions(word);
+      
+      // Create animation entry
+      const animationEntry = historyManagerRef.current.addEntry(
         'add',
         { 
           word,
-          positions: bloomFilterRef.current.getHashPositions(word),
+          positions,
           filterState: bloomFilterRef.current.getState()
         },
         `Added word "${word}" to the filter`
       );
+      
+      // Set current animation
+      setCurrentAnimation(animationEntry);
+      setIsAnimating(true);
       
       return true;
     }
@@ -110,18 +117,25 @@ export const BloomFilterProvider: React.FC<BloomFilterProviderProps> = ({
     const mightContain = bloomFilterRef.current.mightContain(word);
     const definitelyContains = bloomFilterRef.current.definitelyContains(word);
     
-    // Add to history
-    historyManagerRef.current.addEntry(
+    // Get positions for animation
+    const positions = bloomFilterRef.current.getHashPositions(word);
+    
+    // Create animation entry
+    const animationEntry = historyManagerRef.current.addEntry(
       'check',
       { 
         word,
-        positions: bloomFilterRef.current.getHashPositions(word),
+        positions,
         mightContain,
         definitelyContains,
         filterState: bloomFilterRef.current.getState()
       },
       `Checked if word "${word}" exists in the filter`
     );
+    
+    // Set current animation
+    setCurrentAnimation(animationEntry);
+    setIsAnimating(true);
     
     return { mightContain, definitelyContains };
   };

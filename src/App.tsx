@@ -42,7 +42,7 @@ function BloomFilterVisualizer() {
             <AnimationArea 
               isAnimating={isAnimating}
               bloomArrayRef={bloomArrayRef.current ? 
-                { current: bloomArrayRef.current.getBitElements()[0].parentElement as HTMLDivElement } : 
+                { current: bloomArrayRef.current.getBitElements()[0]?.parentElement as HTMLDivElement } : 
                 undefined} 
             />
           </div>

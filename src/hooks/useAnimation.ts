@@ -40,14 +40,18 @@ export function useAnimation() {
     path.style.top = `${startY}px`;
     path.style.left = `${startX}px`;
     path.style.width = '0';
+    path.style.height = '2px'; // Set a consistent height for the line
+    path.style.backgroundColor = '#4285f4'; // Set a visible color
+    path.style.transformOrigin = 'left center'; // Set transform origin to left side
     path.style.transform = `rotate(${angle}deg)`;
+    path.style.transition = `width ${300 / animationSpeed}ms ease-out`; // Add smooth transition
     container.appendChild(path);
     
-    // Animate path drawing and highlight bit
-    requestAnimationFrame(() => {
+    // Animate path drawing and highlight bit - use setTimeout to ensure DOM updates first
+    setTimeout(() => {
       path.style.width = `${distance}px`;
       targetElement.classList.add('highlight');
-    });
+    }, 10);
     
     return path;
   };

@@ -1,4 +1,4 @@
-import React, { useState, useRef } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { useBloomFilter } from '../contexts/BloomFilterContext';
 import styles from './WordsSection.module.css';
 
@@ -9,7 +9,7 @@ interface AnimationState {
 }
 
 const WordsSection: React.FC = () => {
-  const { addWord, removeWord, filterState, bloomFilter } = useBloomFilter();
+  const { addWord, removeWord, filterState, bloomFilter, isAnimating, setIsAnimating } = useBloomFilter();
   const [newWord, setNewWord] = useState('');
   const [errorMessage, setErrorMessage] = useState('');
   const [animation, setAnimation] = useState<AnimationState | null>(null);
@@ -37,6 +37,9 @@ const WordsSection: React.FC = () => {
       isAnimating: true
     });
 
+    // Set global animation state
+    setIsAnimating(true);
+
     // Add word to the filter
     const success = addWord(word);
     if (success) {
@@ -45,12 +48,17 @@ const WordsSection: React.FC = () => {
     } else {
       setErrorMessage(`Word "${word}" is already in the filter.`);
       setAnimation(null);
+      setIsAnimating(false);
     }
   };
 
-  const handleAnimationEnd = () => {
-    setAnimation(null);
-  };
+  // Clear animation state after global animation state changes
+  useEffect(() => {
+    if (!isAnimating && animation?.isAnimating) {
+      // Reset animation state when animation completes
+      setAnimation(null);
+    }
+  }, [isAnimating, animation]);
 
   const handleKeyPress = (e: React.KeyboardEvent) => {
     if (e.key === 'Enter') {
@@ -68,12 +76,12 @@ const WordsSection: React.FC = () => {
           onChange={(e) => setNewWord(e.target.value)}
           onKeyPress={handleKeyPress}
           placeholder="Enter a word to add..."
-          disabled={animation?.isAnimating}
+          disabled={isAnimating}
         />
         <button 
           onClick={handleAddWord} 
           className={styles.primaryBtn}
-          disabled={animation?.isAnimating}
+          disabled={isAnimating}
         >
           Add Word
         </button>
@@ -81,12 +89,6 @@ const WordsSection: React.FC = () => {
       
       {errorMessage && (
         <div className={styles.errorMessage}>{errorMessage}</div>
-      )}
-      
-      {animation && (
-        <div className={styles.animationContainer} ref={bloomArrayRef}>
-          {/* The animation component would be rendered here */}
-        </div>
       )}
       
       <div className={styles.wordsContainer}>

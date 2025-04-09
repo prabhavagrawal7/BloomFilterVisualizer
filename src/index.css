@@ -77,6 +77,7 @@ button:focus-visible {
   background-color: var(--inactive-color);
   transition: all var(--transition-time) ease;
   position: relative;
+  z-index: 15; /* Added z-index to position between BloomArray container and animation lines */
 }
 
 .bit.active {
@@ -95,7 +96,7 @@ button:focus-visible {
   height: 2px;
   background-color: var(--tertiary-color);
   transform-origin: left center;
-  z-index: 1;
+  z-index: 20; /* Increased z-index to appear above BloomArray */
   transition: width 0.5s cubic-bezier(0.4, 0, 0.2, 1);
   will-change: width;
 }

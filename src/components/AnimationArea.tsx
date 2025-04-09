@@ -1,135 +1,140 @@
-import React, { useRef, useEffect, useState } from 'react';
+import React, { useRef, useEffect } from 'react';
 import { useBloomFilter } from '../contexts/BloomFilterContext';
-import { useAnimation } from '../hooks/useAnimation';
 import styles from './AnimationArea.module.css';
 
 interface AnimationAreaProps {
   isAnimating?: boolean;
-  word?: string;
-  positions?: number[];
-  onAnimationEnd?: () => void;
-  type?: 'add' | 'check' | 'remove';
-  bloomArrayRef?: React.RefObject<HTMLDivElement>;
+  bloomArrayRef?: React.RefObject<HTMLDivElement> | undefined;
 }
 
 const AnimationArea: React.FC<AnimationAreaProps> = ({ 
-  isAnimating: externalIsAnimating, 
-  word, 
-  positions = [],
-  onAnimationEnd,
-  type,
+  isAnimating: externalIsAnimating,
   bloomArrayRef
 }) => {
   const animationAreaRef = useRef<HTMLDivElement>(null);
-  const hashVisualizationRef = useRef<HTMLDivElement>(null);
-  const { clearAnimations } = useAnimation();
-  const { setIsAnimating, animationSpeed } = useBloomFilter();
-  const [activeAnimation, setActiveAnimation] = useState(false);
+  const { currentAnimation, isAnimating: contextIsAnimating, animationSpeed, setIsAnimating } = useBloomFilter();
+  
+  // Use either the prop or context value for animation state
+  const isAnimating = externalIsAnimating !== undefined ? externalIsAnimating : contextIsAnimating;
 
-  const isAnimating = externalIsAnimating !== undefined ? externalIsAnimating : activeAnimation;
-
-  useEffect(() => {
-    // Clear previous animations when component updates
-    if (animationAreaRef.current) {
-      clearAnimations(animationAreaRef.current);
-    }
-    return () => {
-      if (animationAreaRef.current) {
-        clearAnimations(animationAreaRef.current);
-      }
-    };
-  }, [word, positions, clearAnimations]);
-
-  // Animate adding a word
-  const animateAddWord = (wordToAdd: string, positionsToHighlight: number[]) => {
+  // Clear animation area
+  const clearAnimations = () => {
     if (!animationAreaRef.current) return;
     
-    setActiveAnimation(true);
-    setIsAnimating(true);
-    
-    // Clear any existing animations
-    clearAnimations(animationAreaRef.current);
-    
-    // Create a word element at the top
-    const wordElement = document.createElement('div');
-    wordElement.className = 'hash-label';
-    wordElement.textContent = `"${wordToAdd}"`;
-    wordElement.style.position = 'absolute';
-    wordElement.style.top = '10px';
-    wordElement.style.left = '50%';
-    wordElement.style.transform = 'translateX(-50%)';
-    animationAreaRef.current.appendChild(wordElement);
-    
-    // Get bit elements if bloomArrayRef is provided
-    const bitElements = bloomArrayRef?.current?.querySelectorAll('.bit');
-    
-    // Animate each hash function
-    positionsToHighlight.forEach((pos, idx) => {
-      setTimeout(() => {
-        if (!animationAreaRef.current) return;
-        
-        // Create hash function label
-        const hashLabel = document.createElement('div');
-        hashLabel.className = 'hash-label';
-        hashLabel.textContent = `Hash ${idx + 1} → ${pos}`;
-        hashLabel.style.position = 'absolute';
-        hashLabel.style.top = '40px';
-        hashLabel.style.left = '50%';
-        hashLabel.style.transform = 'translateX(-50%)';
-        animationAreaRef.current.appendChild(hashLabel);
-        
-        // Highlight bit if bit elements are available
-        if (bitElements && bitElements[pos]) {
-          const bitElement = bitElements[pos] as HTMLElement;
-          
-          // Create an animated path (simplified for now)
-          const path = document.createElement('div');
-          path.className = 'hash-path';
-          path.style.position = 'absolute';
-          path.style.height = '2px';
-          path.style.backgroundColor = '#e74c3c';
-          path.style.top = '60px'; // Position below hash label
-          path.style.left = '50%';
-          path.style.transform = 'translateX(-50%)';
-          path.style.width = '0';
-          animationAreaRef.current.appendChild(path);
-          
-          // Animate path
-          setTimeout(() => {
-            path.style.width = '100px'; // Simple animation
-            bitElement.classList.add('highlight');
-          }, 50);
-        }
-        
-        // Show the result after all hash functions are done
-        if (idx === positionsToHighlight.length - 1) {
-          setTimeout(() => {
-            setActiveAnimation(false);
-            setIsAnimating(false);
-            if (onAnimationEnd) onAnimationEnd();
-          }, (600 / animationSpeed));
-        }
-      }, (idx * 600) / animationSpeed);
-    });
+    // Remove existing hash paths and labels
+    const existingElements = animationAreaRef.current.querySelectorAll('.hash-path, .hash-label');
+    existingElements.forEach(el => el.remove());
   };
 
-  // Run animation based on props
+  // Create and animate a path between two elements
+  const createAnimatedPath = (sourceElement: HTMLElement, targetElement: HTMLElement) => {
+    if (!animationAreaRef.current) return;
+    
+    // Get positions
+    const sourceRect = sourceElement.getBoundingClientRect();
+    const targetRect = targetElement.getBoundingClientRect();
+    const containerRect = animationAreaRef.current.getBoundingClientRect();
+    
+    // Calculate start and end positions
+    const startX = sourceRect.left + sourceRect.width / 2 - containerRect.left;
+    const startY = sourceRect.bottom - containerRect.top;
+    const endX = targetRect.left + targetRect.width / 2 - containerRect.left;
+    const endY = targetRect.top - containerRect.top;
+    
+    // Calculate path properties
+    const dx = endX - startX;
+    const dy = endY - startY;
+    const distance = Math.sqrt(dx * dx + dy * dy);
+    const angle = Math.atan2(dy, dx) * 180 / Math.PI;
+    
+    // Create path element
+    const path = document.createElement('div');
+    path.className = 'hash-path';
+    path.style.position = 'absolute';
+    path.style.top = `${startY}px`;
+    path.style.left = `${startX}px`;
+    path.style.width = '0';
+    path.style.height = '2px'; // Set a consistent height for the line
+    path.style.backgroundColor = '#4285f4'; // Set a visible color
+    path.style.transformOrigin = 'left center'; // Set transform origin to left side
+    path.style.transform = `rotate(${angle}deg)`;
+    path.style.transition = `width ${300 / animationSpeed}ms ease-out`; // Add smooth transition
+    animationAreaRef.current.appendChild(path);
+    
+    // Animate path drawing - use setTimeout to ensure DOM updates first
+    setTimeout(() => {
+      path.style.width = `${distance}px`;
+      targetElement.classList.add('highlight');
+    }, 10);
+    
+    return path;
+  };
+
+  // Effect to handle animations when currentAnimation changes
   useEffect(() => {
-    if (word && positions.length > 0 && type === 'add') {
-      animateAddWord(word, positions);
+    // Only proceed if there's an animation to show
+    if (!currentAnimation || !isAnimating || !bloomArrayRef?.current) return;
+    
+    clearAnimations();
+    
+    // Handle different animation types
+    if (currentAnimation.type === 'add' || currentAnimation.type === 'check') {
+      const { word, positions } = currentAnimation.data as { word: string; positions: number[] };
+      if (!word || !positions.length) return;
+      
+      // Get bit elements
+      const bitElements = Array.from(bloomArrayRef.current.querySelectorAll('.bit')) as HTMLElement[];
+      if (!bitElements.length) return;
+      
+      // Create word element
+      const wordElement = document.createElement('div');
+      wordElement.className = 'hash-label';
+      wordElement.textContent = `"${word}"`;
+      wordElement.style.position = 'absolute';
+      wordElement.style.top = '10px';
+      wordElement.style.left = '50%';
+      wordElement.style.transform = 'translateX(-50%)';
+      animationAreaRef.current?.appendChild(wordElement);
+      
+      // Animate each hash position
+      positions.forEach((position, index) => {
+        setTimeout(() => {
+          if (!animationAreaRef.current || !bitElements[position]) return;
+          
+          // Create hash label
+          const hashLabel = document.createElement('div');
+          hashLabel.className = 'hash-label';
+          hashLabel.textContent = `Hash ${index + 1} → ${position}`;
+          hashLabel.style.position = 'absolute';
+          hashLabel.style.top = '50px';
+          hashLabel.style.left = '50%';
+          hashLabel.style.transform = 'translateX(-50%)';
+          animationAreaRef.current.appendChild(hashLabel);
+          
+          // Create animated path between label and bit
+          if (bitElements[position]) {
+            createAnimatedPath(hashLabel, bitElements[position]);
+          }
+          
+          // Complete animation after all hash functions have been visualized
+          if (index === positions.length - 1) {
+            setTimeout(() => {
+              setIsAnimating(false);
+            }, 1000 / animationSpeed);
+          }
+        }, index * 800 / animationSpeed);
+      });
     }
-    // Add more animation types as needed
-  }, [word, positions, type]);
+    
+    // Clean up animation on unmount or when animation changes
+    return () => {
+      clearAnimations();
+    };
+  }, [currentAnimation, isAnimating, bloomArrayRef, animationSpeed, setIsAnimating]);
 
   return (
     <div className={styles.animationArea} ref={animationAreaRef}>
-      <div className={styles.hashVisualization} ref={hashVisualizationRef}>
-        {isAnimating && word && !document.querySelector('.hash-label') && (
-          <div className="hash-label" style={{ position: 'absolute', top: '10px', left: '50%', transform: 'translateX(-50%)' }}>
-            "{word}"
-          </div>
-        )}
-      </div>
+      {/* Animation elements will be added dynamically */}
     </div>
   );
 };
