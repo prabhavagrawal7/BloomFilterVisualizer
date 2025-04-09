@@ -1,0 +1,7 @@
+.animatedLine {
+  position: absolute;
+  background-color: #4285f4;
+  transform-origin: left center;
+  pointer-events: none; /* Make sure the line doesn't interfere with clicks */
+  z-index: 5; /* Ensure the line appears above other elements */
+}

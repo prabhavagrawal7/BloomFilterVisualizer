@@ -1,69 +1,71 @@
-import React, { useState, useRef } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { useBloomFilter } from '../contexts/BloomFilterContext';
 import AnimationArea from './AnimationArea';
 import styles from './CheckWordSection.module.css';
 
-interface AnimationState {
-  word: string;
-  positions: number[];
-  mightContain: boolean;
-  definitelyContains: boolean;
-}
-
 const CheckWordSection: React.FC = () => {
-  const { checkWord, bloomFilter } = useBloomFilter();
+  const { checkWord, isAnimating } = useBloomFilter();
   const [wordToCheck, setWordToCheck] = useState('');
-  const [animation, setAnimation] = useState<AnimationState | null>(null);
-  const [isAnimating, setIsAnimating] = useState(false);
+  const [result, setResult] = useState<{
+    word: string;
+    mightContain: boolean;
+    definitelyContains: boolean;
+  } | null>(null);
   const bloomArrayRef = useRef<HTMLDivElement>(null);
+
+  // Track previous animation state to detect when animation completes
+  const prevAnimatingRef = useRef(isAnimating);
+
+  useEffect(() => {
+    // Detect when animation finishes (transition from animating to not animating)
+    if (prevAnimatingRef.current && !isAnimating) {
+      // Animation just finished - input should now be enabled
+    }
+    
+    // Update ref to current state
+    prevAnimatingRef.current = isAnimating;
+  }, [isAnimating]);
 
   const handleCheckWord = () => {
     const word = wordToCheck.trim();
-    if (!word) return;
-
-    setIsAnimating(true);
+    if (!word || isAnimating) return;
     
-    // Get positions for animation
-    const positions = bloomFilter.getHashPositions(word);
-    
-    // Check the word
+    // Check the word - this also triggers animation via context
     const { mightContain, definitelyContains } = checkWord(word);
     
-    // Set up animation state
-    setAnimation({
+    // Store result for display
+    setResult({
       word,
-      positions,
       mightContain,
       definitelyContains
     });
-  };
-
-  const handleAnimationEnd = () => {
-    setIsAnimating(false);
+    
+    // Clear input for next word
+    setWordToCheck('');
   };
 
   const handleKeyPress = (e: React.KeyboardEvent) => {
-    if (e.key === 'Enter') {
+    if (e.key === 'Enter' && !isAnimating) {
       handleCheckWord();
     }
   };
 
   const getResultClass = () => {
-    if (!animation) return '';
-    if (animation.definitelyContains) return styles.positive;
-    if (animation.mightContain) return styles.warning;
+    if (!result) return '';
+    if (result.definitelyContains) return styles.positive;
+    if (result.mightContain) return styles.warning;
     return styles.negative;
   };
 
   const getResultMessage = () => {
-    if (!animation) return '';
-    if (animation.definitelyContains) {
-      return `"${animation.word}" is in the filter.`;
+    if (!result) return '';
+    if (result.definitelyContains) {
+      return `"${result.word}" is in the filter.`;
     }
-    if (animation.mightContain) {
-      return `"${animation.word}" might be in the filter (false positive).`;
+    if (result.mightContain) {
+      return `"${result.word}" might be in the filter (false positive).`;
     }
-    return `"${animation.word}" is definitely NOT in the filter.`;
+    return `"${result.word}" is definitely NOT in the filter.`;
   };
 
   return (
@@ -87,21 +89,12 @@ const CheckWordSection: React.FC = () => {
         </button>
       </div>
       
-      {animation && (
-        <div className={styles.animationContainer} ref={bloomArrayRef}>
-          <AnimationArea 
-            word={animation.word}
-            positions={animation.positions}
-            isAnimating={isAnimating}
-            type="check"
-            bloomArrayRef={bloomArrayRef}
-            onAnimationEnd={handleAnimationEnd}
-          />
-        </div>
-      )}
+      <div className={styles.animationContainer} ref={bloomArrayRef}>
+        <AnimationArea bloomArrayRef={bloomArrayRef} />
+      </div>
       
       <div className={styles.resultDisplay}>
-        {animation && (
+        {result && (
           <div className={`${styles.resultMessage} ${getResultClass()}`}>
             {getResultMessage()}
           </div>

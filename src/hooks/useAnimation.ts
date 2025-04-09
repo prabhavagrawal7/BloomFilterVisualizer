@@ -1,5 +1,21 @@
-import { useEffect, useRef } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { useBloomFilter } from '../contexts/BloomFilterContext';
+
+// Define types for animation elements
+interface LineConfig {
+  id: string;
+  startX: number;
+  startY: number;
+  angle: number;
+  distance: number;
+}
+
+interface LabelConfig {
+  id: string;
+  text: string;
+  top: number;
+  left: string;
+}
 
 export function useAnimation() {
   const { 
@@ -8,14 +24,28 @@ export function useAnimation() {
     setIsAnimating 
   } = useBloomFilter();
   
+  // Use React state instead of DOM manipulation
+  const [lines, setLines] = useState<LineConfig[]>([]);
+  const [labels, setLabels] = useState<LabelConfig[]>([]);
+  const [highlightedBits, setHighlightedBits] = useState<number[]>([]);
+  
+  // Store timeouts to clean them up later
+  const timeoutsRef = useRef<number[]>([]);
+  
+  // Clean up timeouts
+  const clearTimeouts = () => {
+    timeoutsRef.current.forEach(id => window.clearTimeout(id));
+    timeoutsRef.current = [];
+  };
+  
   /**
-   * Create an animated path between a source and target element
+   * Calculate a path between a source and target element
    */
-  const createAnimatedPath = (
+  const calculatePath = (
     sourceElement: HTMLElement, 
     targetElement: HTMLElement, 
     container: HTMLElement
-  ) => {
+  ): LineConfig => {
     // Get positions relative to the container
     const sourceRect = sourceElement.getBoundingClientRect();
     const targetRect = targetElement.getBoundingClientRect();
@@ -33,46 +63,43 @@ export function useAnimation() {
     const distance = Math.sqrt(dx * dx + dy * dy);
     const angle = Math.atan2(dy, dx) * 180 / Math.PI;
     
-    // Create path element
-    const path = document.createElement('div');
-    path.className = 'hash-path';
-    path.style.position = 'absolute';
-    path.style.top = `${startY}px`;
-    path.style.left = `${startX}px`;
-    path.style.width = '0';
-    path.style.height = '2px'; // Set a consistent height for the line
-    path.style.backgroundColor = '#4285f4'; // Set a visible color
-    path.style.transformOrigin = 'left center'; // Set transform origin to left side
-    path.style.transform = `rotate(${angle}deg)`;
-    path.style.transition = `width ${300 / animationSpeed}ms ease-out`; // Add smooth transition
-    container.appendChild(path);
-    
-    // Animate path drawing and highlight bit - use setTimeout to ensure DOM updates first
-    setTimeout(() => {
-      path.style.width = `${distance}px`;
-      targetElement.classList.add('highlight');
-    }, 10);
-    
-    return path;
+    return {
+      id: `line-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
+      startX,
+      startY,
+      angle,
+      distance,
+    };
   };
 
   /**
-   * Clear animations from a specified element
+   * Create an animated path between elements using React state
    */
-  const clearAnimations = (targetArea: HTMLElement) => {
-    // Remove existing hash paths and labels
-    const existingPaths = targetArea.querySelectorAll('.hash-path, .hash-label');
-    existingPaths.forEach(path => path.remove());
+  const createAnimatedPath = (
+    sourceElement: HTMLElement, 
+    targetElement: HTMLElement, 
+    container: HTMLElement,
+    bitPosition: number
+  ) => {
+    const lineConfig = calculatePath(sourceElement, targetElement, container);
     
-    // Find the bloom array associated with this target
-    const rootElement = targetArea.closest('.main-view, .history-animation');
-    if (rootElement) {
-      const bloomArray = rootElement.querySelector('.bloom-array');
-      if (bloomArray) {
-        const highlightedBits = bloomArray.querySelectorAll('.bit.highlight');
-        highlightedBits.forEach(bit => bit.classList.remove('highlight'));
-      }
-    }
+    // Add line to state
+    setLines(prev => [...prev, lineConfig]);
+    
+    // Highlight the target bit
+    setHighlightedBits(prev => [...prev, bitPosition]);
+    
+    return lineConfig.id;
+  };
+
+  /**
+   * Clear animations by resetting state
+   */
+  const clearAnimations = () => {
+    clearTimeouts();
+    setLines([]);
+    setLabels([]);
+    setHighlightedBits([]);
   };
 
   /**
@@ -88,56 +115,75 @@ export function useAnimation() {
     setIsAnimating(true);
     
     // Clear any existing animations
-    clearAnimations(animationArea);
+    clearAnimations();
     
-    // Create a word element at the top
-    const wordElement = document.createElement('div');
-    wordElement.className = 'hash-label';
-    wordElement.textContent = `"${word}"`;
-    wordElement.style.position = 'absolute';
-    wordElement.style.top = '10px';
-    wordElement.style.left = '50%';
-    wordElement.style.transform = 'translateX(-50%)';
-    animationArea.appendChild(wordElement);
+    // Add word label at the top
+    const wordLabel: LabelConfig = {
+      id: `word-${Date.now()}`,
+      text: `"${word}"`,
+      top: 10,
+      left: '50%',
+    };
+    
+    setLabels(prev => [...prev, wordLabel]);
     
     // Animate each hash function
     positions.forEach((pos, idx) => {
-      setTimeout(() => {
+      const timeoutId = window.setTimeout(() => {
         // Create hash function label
-        const hashLabel = document.createElement('div');
-        hashLabel.className = 'hash-label';
-        hashLabel.textContent = `Hash ${idx + 1} → ${pos}`;
-        hashLabel.style.position = 'absolute';
-        hashLabel.style.top = '40px';
-        hashLabel.style.left = '50%';
-        hashLabel.style.transform = 'translateX(-50%)';
-        animationArea.appendChild(hashLabel);
+        const hashLabel: LabelConfig = {
+          id: `hash-${Date.now()}-${idx}`,
+          text: `Hash ${idx + 1} → ${pos}`,
+          top: 40,
+          left: '50%',
+        };
         
-        // Create and animate path
-        if (bitElements[pos]) {
-          createAnimatedPath(hashLabel, bitElements[pos], animationArea);
-        }
+        setLabels(prev => [...prev, hashLabel]);
+        
+        // Create and animate path after a small delay to ensure label is rendered
+        const pathTimeout = window.setTimeout(() => {
+          const hashElement = document.getElementById(hashLabel.id);
+          if (hashElement && bitElements[pos]) {
+            createAnimatedPath(hashElement, bitElements[pos], animationArea, pos);
+          }
+        }, 20);
+        
+        timeoutsRef.current.push(pathTimeout);
         
         // Show the result after all hash functions are done
         if (idx === positions.length - 1) {
-          setTimeout(() => {
+          const completeTimeout = window.setTimeout(() => {
             setIsAnimating(false);
             if (onComplete) onComplete();
           }, (600 / animationSpeed));
+          
+          timeoutsRef.current.push(completeTimeout);
         }
         
-        // Clean up after a delay
-        setTimeout(() => {
-          if (bitElements[pos]) {
-            bitElements[pos].classList.remove('highlight');
-          }
+        // Clean up bit highlights after a delay
+        const cleanupTimeout = window.setTimeout(() => {
+          setHighlightedBits(prev => prev.filter(bit => bit !== pos));
         }, (800 / animationSpeed));
+        
+        timeoutsRef.current.push(cleanupTimeout);
       }, (idx * 600) / animationSpeed);
+      
+      timeoutsRef.current.push(timeoutId);
     });
   };
+  
+  // Clean up timeouts when component unmounts
+  useEffect(() => {
+    return () => {
+      clearTimeouts();
+      setIsAnimating(false);
+    };
+  }, [setIsAnimating]);
 
   return {
-    createAnimatedPath,
+    lines,
+    labels,
+    highlightedBits,
     clearAnimations,
     animateAddWord
   };
