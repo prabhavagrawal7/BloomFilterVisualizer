@@ -530,13 +530,16 @@ document.addEventListener('DOMContentLoaded', () => {
                 }
             });
 
-            // Check if animation container exists or create a new one
-            let historyAnimationContainer = document.querySelector('.history-animation');
-            if (!historyAnimationContainer) {
-                historyAnimationContainer = document.createElement('div');
-                historyAnimationContainer.className = 'history-animation';
-                this.historyLog.parentNode.insertBefore(historyAnimationContainer, this.historyLog.nextSibling);
+            // Remove any existing animation container
+            let existingAnimationContainer = document.querySelector('.history-animation');
+            if (existingAnimationContainer) {
+                existingAnimationContainer.remove();
             }
+
+            // Create a new animation container
+            const historyAnimationContainer = document.createElement('div');
+            historyAnimationContainer.className = 'history-animation';
+            this.historyLog.parentNode.insertBefore(historyAnimationContainer, this.historyLog.nextSibling);
 
             // Create bloom array and animation area
             historyAnimationContainer.innerHTML = `
@@ -547,7 +550,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 </div>
             `;
             
-            // Show animation container
+            // Show animation container (with small delay to prevent transition)
             setTimeout(() => {
                 historyAnimationContainer.classList.add('active');
             }, 10);
@@ -574,9 +577,6 @@ document.addEventListener('DOMContentLoaded', () => {
                 
                 historyBloomArray.appendChild(bitElement);
             });
-            
-            // Clear existing animations
-            this.clearAnimations(historyAnimationArea);
             
             // Play the animation based on the action type
             this.isAnimating = true;

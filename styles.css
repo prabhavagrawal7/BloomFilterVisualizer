@@ -142,12 +142,26 @@ input[type="number"] {
     margin-bottom: 30px;
 }
 
+.visualization-section h2 {
+    position: sticky;
+    top: 0;
+    background-color: white;
+    z-index: 10;
+    padding: 10px 0;
+    margin: 0;
+}
+
 .bloom-array {
     display: flex;
     flex-wrap: wrap;
     gap: 5px;
     margin-bottom: 20px;
     justify-content: center;
+    position: sticky;
+    top: 50px;
+    background-color: white;
+    z-index: 10;
+    padding: 10px 0;
 }
 
 .bit {
@@ -391,12 +405,22 @@ input[type="text"] {
     position: relative;
     height: 0;
     opacity: 0;
-    transition: height 0.3s ease-out, opacity 0.3s ease;
+    transition: opacity 0.3s ease;
 }
 
 .history-animation.active {
-    height: 300px;
+    height: auto;
     opacity: 1;
+}
+
+/* History replay section specific styling */
+.history-bloom-array {
+    min-height: 120px;
+    padding: 10px 0;
+}
+
+.history-animation-area {
+    min-height: 120px;
 }
 
 /* Info Section */
