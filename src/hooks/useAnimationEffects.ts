@@ -169,27 +169,24 @@ export function useAnimationEffects() {
 
       // End animation after all bits are highlighted with a more consistent timing
       timeoutRef.current = window.setTimeout(() => {
-        // Use a stable reference to the current animation state to avoid race conditions
-        const animationComplete = () => {
-          // First clear animations to avoid DOM update conflicts
-          setTimeout(() => {
+        // Add an additional delay to keep animations visible for a moment
+        // but without the unnecessary nesting
+        setTimeout(() => {
+          // Use requestAnimationFrame to sync with browser rendering cycle
+          requestAnimationFrame(() => {
+            // Clear animations in a single call
             setLines([]);
             setLabels([]);
             setHighlightedBits([]);
             
-            // Clear the timeout ref to avoid double-clearing
+            // Clean up references
             timeoutRef.current = null;
-            
-            // Mark as no longer animating
             isAnimatingRef.current = false;
             
-            // Then we can safely set animation state to false
+            // Update animation state
             setIsAnimating(false);
-          }, 1000); // Keep animations visible for a second before clearing them
-        };
-        
-        // Wrap in requestAnimationFrame to ensure DOM updates are batched correctly
-        requestAnimationFrame(animationComplete);
+          });
+        }, 500); // Reduced from 1000ms to 500ms for better responsiveness while still showing animation
       }, baseDelay + (hashPositions.length * sequenceDelay) + 600) as unknown as number;
     };
 
