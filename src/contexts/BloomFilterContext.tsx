@@ -16,6 +16,7 @@ interface BloomFilterContextType {
   checkWord: (word: string) => { mightContain: boolean; definitelyContains: boolean };
   removeWord: (word: string) => boolean;
   clearAnimations: () => void;
+  replayLastAnimation: () => void;
 }
 
 const BloomFilterContext = createContext<BloomFilterContextType | undefined>(undefined);
@@ -41,9 +42,8 @@ export const BloomFilterProvider: React.FC<BloomFilterProviderProps> = ({
 }) => {
   // Use the animation context for animation-related state
   const { 
-    isAnimating, 
     setIsAnimating,
-    setFocusTarget 
+    setFocusTarget
   } = useAnimation();
   
   const bloomFilterRef = useRef(new BloomFilter(initialSize, initialHashFunctions));
@@ -167,6 +167,30 @@ export const BloomFilterProvider: React.FC<BloomFilterProviderProps> = ({
     // This will be implemented in components as it deals with DOM elements
   };
 
+  // Function to replay the last animation
+  const replayLastAnimation = () => {
+    const history = historyManagerRef.current.getHistory();
+    if (history.length > 0) {
+      // Get the most recent animation from history
+      const lastAnimation = history[0]; // History is stored in reverse (newest first)
+      
+      // Set it as the current animation
+      setCurrentAnimation(lastAnimation);
+      
+      // Start animating
+      setIsAnimating(true);
+      
+      // Set focus target based on animation type
+      if (lastAnimation.type === 'add') {
+        setFocusTarget(FocusTarget.ADD);
+      } else if (lastAnimation.type === 'check') {
+        setFocusTarget(FocusTarget.CHECK);
+      } else {
+        setFocusTarget(FocusTarget.NONE);
+      }
+    }
+  };
+
   const value = {
     bloomFilter: bloomFilterRef.current,
     historyManager: historyManagerRef.current,
@@ -180,6 +204,7 @@ export const BloomFilterProvider: React.FC<BloomFilterProviderProps> = ({
     checkWord,
     removeWord,
     clearAnimations,
+    replayLastAnimation,
   };
 
   return (

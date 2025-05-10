@@ -1,9 +1,8 @@
-import React, { useState, useRef, useEffect, memo } from 'react';
+// filepath: /workspaces/BloomFilterVisualizer/src/components/CheckWordSection.tsx
+import { useState, useRef, useEffect, memo, useCallback, KeyboardEvent, ChangeEvent } from 'react';
 import { useBloomFilter } from '../contexts/BloomFilterContext';
-import { useAnimation } from '../contexts/AnimationContext';
-import { FocusTarget } from '../contexts/AnimationContext';
+import { useAnimation, FocusTarget } from '../contexts/AnimationContext';
 import AnimationArea from './AnimationArea';
-import styles from './CheckWordSection.module.css';
 
 // Use memo to prevent unnecessary re-renders
 const CheckWordSection: React.FC = memo(() => {
@@ -28,108 +27,115 @@ const CheckWordSection: React.FC = memo(() => {
 
   // Track previous animation state to detect when animation completes
   const prevAnimatingRef = useRef(isAnimating);
-
+  
+  // Use useEffect to handle post-animation focus
   useEffect(() => {
-    // Detect when animation finishes (transition from animating to not animating)
-    if (prevAnimatingRef.current && !isAnimating) {
-      // Animation just finished - set focus flag if this section was active 
-      if (focusTarget === FocusTarget.CHECK) {
-        // First reset the focus target
-        setFocusTarget(FocusTarget.NONE);
-        
-        // Use setTimeout to ensure state updates have been processed
-        setTimeout(() => {
-          setShouldFocusInput(true);
-        }, 0);
-      }
+    // If animation was running but now stopped and the target is CHECK
+    if (prevAnimatingRef.current && !isAnimating && focusTarget === FocusTarget.CHECK) {
+      // Reset focus target
+      setFocusTarget(FocusTarget.NONE);
+      
+      // Wait for next render cycle to ensure state has updated
+      setTimeout(() => {
+        setShouldFocusInput(true);
+      }, 0);
     }
     
-    // Update ref to current state
+    // Update the ref value for next check
     prevAnimatingRef.current = isAnimating;
   }, [isAnimating, focusTarget, setFocusTarget]);
-  
-  const handleCheckWord = React.useCallback(() => {
+
+  // Use useCallback for stable function references
+  const handleCheckWord = useCallback(() => {
     const word = wordToCheck.trim();
-    if (!word || isAnimating) return;
+    if (!word) return;
     
-    // Check the word - animation is handled by context
+    // Prevent checking if currently animating
+    if (isAnimating) return;
+    
     const { mightContain, definitelyContains } = checkWord(word);
     
-    // Store result for display
     setResult({
       word,
       mightContain,
       definitelyContains
     });
-    
-    // Clear input for next word
-    setWordToCheck('');
-  }, [wordToCheck, isAnimating, checkWord, setResult, setWordToCheck]);
+  }, [wordToCheck, isAnimating, checkWord, setResult]);
 
-  // Use useCallback for stable function reference to prevent unnecessary re-renders
-  const handleKeyDown = React.useCallback((e: React.KeyboardEvent) => {
+  const handleKeyDown = useCallback((e: KeyboardEvent<HTMLInputElement>) => {
     if (e.key === 'Enter' && !isAnimating) {
-      e.preventDefault(); // Prevent default behavior
+      e.preventDefault();
       handleCheckWord();
     }
   }, [isAnimating, handleCheckWord]);
-
+  
   const getResultClass = () => {
     if (!result) return '';
-    if (result.definitelyContains) return styles.positive;
-    if (result.mightContain) return styles.warning;
-    return styles.negative;
+    
+    if (result.definitelyContains) {
+      return 'bg-green-100 border-green-500 text-green-800';
+    } else if (result.mightContain) {
+      return 'bg-yellow-100 border-yellow-500 text-yellow-800';
+    } else {
+      return 'bg-red-100 border-red-500 text-red-800';
+    }
   };
-
+  
   const getResultMessage = () => {
     if (!result) return '';
+    
     if (result.definitelyContains) {
-      return `"${result.word}" is in the filter.`;
+      return `"${result.word}" is DEFINITELY in the Bloom filter.`;
+    } else if (result.mightContain) {
+      return `"${result.word}" MIGHT be in the Bloom filter (possible false positive).`;
+    } else {
+      return `"${result.word}" is DEFINITELY NOT in the Bloom filter.`;
     }
-    if (result.mightContain) {
-      return `"${result.word}" might be in the filter (false positive).`;
-    }
-    return `"${result.word}" is definitely NOT in the filter.`;
   };
 
+  const handleInputChange = useCallback((e: ChangeEvent<HTMLInputElement>) => 
+    setWordToCheck(e.target.value), []);
+
+  const handleInputFocus = useCallback(() => {
+    if (!isAnimating) {
+      setFocusTarget(FocusTarget.CHECK);
+      if (shouldFocusInput) {
+        setShouldFocusInput(false);
+      }
+    }
+  }, [isAnimating, setFocusTarget, shouldFocusInput, setShouldFocusInput]);
+
   return (
-    <div className={styles.column}>
-      <h2>Check if Word Exists</h2>
-      <div className={styles.inputGroup}>
+    <div className="flex-1 bg-slate-50 p-5 rounded-lg">
+      <h2 className="text-xl font-semibold mb-4 text-slate-700">Check Word</h2>
+      <div className="flex gap-3 mb-5">
         <input 
           type="text" 
           value={wordToCheck}
-          onChange={React.useCallback((e: React.ChangeEvent<HTMLInputElement>) => 
-            setWordToCheck(e.target.value), [setWordToCheck])}
+          onChange={handleInputChange}
           onKeyDown={handleKeyDown}
           placeholder="Enter a word to check..."
           disabled={isAnimating} 
           autoFocus={shouldFocusInput}
-          onFocus={React.useCallback(() => {
-            if (!isAnimating) {
-              setFocusTarget(FocusTarget.CHECK);
-              if (shouldFocusInput) {
-                setShouldFocusInput(false);
-              }
-            }
-          }, [isAnimating, setFocusTarget, shouldFocusInput, setShouldFocusInput])}
+          onFocus={handleInputFocus}
+          className="flex-1 p-2.5 border border-slate-300 rounded-md text-base"
         />
         <button 
           onClick={handleCheckWord} 
-          className={styles.secondaryBtn}
+          className="px-5 py-2.5 border-none rounded-md cursor-pointer font-semibold transition-all duration-300 bg-green-500 text-white hover:bg-green-600 disabled:opacity-50 disabled:cursor-not-allowed"
           disabled={isAnimating}
         >
           Check Word
         </button>
       </div>
       
-      <div className={styles.animationContainer} ref={bloomArrayRef}>
+      <div className="relative mb-5" ref={bloomArrayRef}>
         <AnimationArea bloomArrayRef={bloomArrayRef} />
       </div>
       
-      <div className={styles.resultDisplay}>
+      <div className="mt-4">
         {result && (
-          <div className={`${styles.resultMessage} ${getResultClass()}`}>
+          <div className={`p-4 rounded-md border ${getResultClass()}`}>
             {getResultMessage()}
           </div>
         )}

@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useRef, useState, useCallback } from 'react';
 import { useBloomFilter } from '../contexts/BloomFilterContext';
 import { useAnimation } from '../contexts/AnimationContext';
 
@@ -30,8 +30,8 @@ export function useAnimationEffects() {
   // Refs for animation timers
   const timeoutRef = useRef<number | null>(null);
 
-  // Clear all animations
-  const clearAnimations = () => {
+  // Clear all animations - memoized to prevent infinite renders
+  const clearAnimations = useCallback(() => {
     // Clear timing callbacks first
     if (timeoutRef.current) {
       window.clearTimeout(timeoutRef.current);
@@ -42,13 +42,13 @@ export function useAnimationEffects() {
     setLines([]);
     setLabels([]);
     setHighlightedBits([]);
-  };
+  }, []);
 
   // Use ref to prevent duplicate animations
   const isAnimatingRef = useRef(false);
 
-  // Function to animate adding a word
-  const animateAddWord = (
+  // Function to animate adding a word - memoized to prevent infinite renders
+  const animateAddWord = useCallback((
     word: string,
     hashPositions: number[],
     bitElements: HTMLElement[],
@@ -195,7 +195,7 @@ export function useAnimationEffects() {
 
     // Start highlighting after a short delay
     setTimeout(highlightBits, 200);
-  };
+  }, [animationSpeed, clearAnimations, setIsAnimating]); // Close useCallback with dependencies
 
   // We don't need an effect to clear animations when isAnimating changes
   // This would cause an infinite update cycle

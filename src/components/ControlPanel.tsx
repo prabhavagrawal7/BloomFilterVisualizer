@@ -1,17 +1,12 @@
 import React, { useState } from 'react';
 import { useBloomFilter } from '../contexts/BloomFilterContext';
-import styles from './ControlPanel.module.css';
 
-interface ControlPanelProps {
-  onTabChange: (tab: 'main' | 'history') => void;
-  activeTab: 'main' | 'history';
-}
-
-const ControlPanel: React.FC<ControlPanelProps> = ({ onTabChange, activeTab }) => {
+const ControlPanel: React.FC = () => {
   const { 
     updateFilterParams, 
     resetFilter,
-    filterState
+    filterState,
+    replayLastAnimation
   } = useBloomFilter();
   
   const [filterSize, setFilterSize] = useState(filterState.size);
@@ -32,29 +27,31 @@ const ControlPanel: React.FC<ControlPanelProps> = ({ onTabChange, activeTab }) =
   };
 
   return (
-    <div className={styles.controlsSection}>
-      <div className={styles.filterParams}>
-        <div className={styles.paramGroup}>
-          <label htmlFor="filterSize">Filter Size:</label>
+    <div className="mb-8 bg-slate-50 p-5 rounded-lg">
+      <div className="flex flex-wrap gap-5 items-center mb-5">
+        <div className="flex items-center gap-3">
+          <label htmlFor="filterSize" className="font-semibold">Filter Size:</label>
           <input 
             type="number" 
             id="filterSize" 
             min="8"
             max="128" 
             step="8" 
+            className="border border-slate-300 rounded p-2 w-20"
             value={filterSize} 
             onChange={handleSizeChange}
             onBlur={handleUpdateParams}
           />
         </div>
         
-        <div className={styles.paramGroup}>
-          <label htmlFor="hashFunctions">Hash Functions:</label>
+        <div className="flex items-center gap-3">
+          <label htmlFor="hashFunctions" className="font-semibold">Hash Functions:</label>
           <input 
             type="number" 
             id="hashFunctions" 
             min="1" 
-            max="5" 
+            max="5"
+            className="border border-slate-300 rounded p-2 w-20"
             value={hashFunctions} 
             onChange={handleHashFunctionsChange}
             onBlur={handleUpdateParams}
@@ -62,25 +59,19 @@ const ControlPanel: React.FC<ControlPanelProps> = ({ onTabChange, activeTab }) =
         </div>
 
         <button 
-          className={styles.primaryBtn} 
+          className="px-5 py-2.5 border-none rounded-md cursor-pointer font-semibold transition-all duration-300 bg-blue-500 text-white hover:bg-blue-600"
           onClick={resetFilter}
         >
           Reset Filter
         </button>
       </div>
       
-      <div className={styles.tabs}>
+      <div className="mt-5">
         <button 
-          className={`${styles.tabBtn} ${activeTab === 'main' ? styles.active : ''}`}
-          onClick={() => onTabChange('main')}
+          className="px-5 py-2.5 border-none rounded-md cursor-pointer font-semibold transition-all duration-300 bg-blue-500 text-white hover:bg-blue-600"
+          onClick={replayLastAnimation}
         >
-          Main View
-        </button>
-        <button 
-          className={`${styles.tabBtn} ${activeTab === 'history' ? styles.active : ''}`}
-          onClick={() => onTabChange('history')}
-        >
-          History Log
+          Replay Last Animation
         </button>
       </div>
     </div>

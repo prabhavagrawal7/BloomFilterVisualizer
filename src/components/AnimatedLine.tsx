@@ -1,5 +1,4 @@
-import React, { useEffect, useState } from 'react';
-import styles from './AnimatedLine.module.css';
+import { useEffect, useState } from 'react';
 
 interface AnimatedLineProps {
   startX: number;
@@ -38,7 +37,7 @@ const AnimatedLine: React.FC<AnimatedLineProps> = ({
   
   return (
     <div
-      className={styles.animatedLine}
+      className="absolute pointer-events-none z-10"
       style={{
         top: `${startY}px`,
         left: `${startX}px`,

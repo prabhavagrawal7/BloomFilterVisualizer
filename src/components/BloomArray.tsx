@@ -1,5 +1,4 @@
-import React, { useRef, useEffect, forwardRef, useImperativeHandle } from 'react';
-import styles from './BloomArray.module.css';
+import { useRef, useEffect, forwardRef, useImperativeHandle } from 'react';
 
 interface BloomArrayProps {
   bitArray: boolean[];
@@ -59,16 +58,16 @@ const BloomArray = forwardRef<BloomArrayHandle, BloomArrayProps>(
     }, [highlightPositions]);
 
     return (
-      <div className={styles.bloomArray} ref={arrayRef}>
+      <div className="flex flex-wrap gap-1 mb-5 justify-center sticky top-[50px] bg-white z-10 py-3" ref={arrayRef}>
         {bitArray.map((bit, index) => (
           <div 
             key={index}
-            className={`bit ${bit ? 'active' : ''}`}
+            className={`bit w-8 h-8 flex items-center justify-center border border-gray-300 rounded-md text-lg font-mono relative cursor-pointer transition-colors ${bit ? 'bg-blue-500 text-white' : 'bg-white text-gray-800'}`}
             data-index={index}
           >
             {bit ? '1' : '0'}
             {index % 4 === 0 && (
-              <span className={styles.bitIndex}>{index}</span>
+              <span className="absolute -top-5 text-xs text-gray-500">{index}</span>
             )}
           </div>
         ))}

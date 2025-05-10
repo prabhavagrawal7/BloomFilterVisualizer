@@ -1,9 +1,8 @@
-import React, { useRef, useEffect, memo } from 'react';
+import { useRef, useEffect, memo } from 'react';
 import { useBloomFilter } from '../contexts/BloomFilterContext';
 import { useAnimation } from '../contexts/AnimationContext';
 import { useAnimationEffects } from '../hooks/useAnimationEffects';
 import AnimatedLine from './AnimatedLine';
-import styles from './AnimationArea.module.css';
 
 interface AnimationAreaProps {
   bloomArrayRef?: React.RefObject<HTMLDivElement> | undefined;
@@ -24,8 +23,7 @@ const AnimationArea: React.FC<AnimationAreaProps> = memo(({
     clearAnimations 
   } = useAnimationEffects();
 
-  // Use a ref to track the animation that's currently being processed
-  const processedAnimationRef = useRef<string | null>(null);
+  // We don't need to track processed animations anymore as we want to be able to replay
   
   // Effect to handle animations when currentAnimation changes
   useEffect(() => {
@@ -33,14 +31,12 @@ const AnimationArea: React.FC<AnimationAreaProps> = memo(({
     if (!isAnimating || 
         !currentAnimation || 
         !bloomArrayRef?.current || 
-        !animationAreaRef.current ||
-        // Skip if we already processed this animation (prevents infinite loops)
-        processedAnimationRef.current === currentAnimation.id) {
+        !animationAreaRef.current) {
       return;
     }
     
-    // Mark this animation as being processed
-    processedAnimationRef.current = currentAnimation.id;
+    // Clear any previous animations first
+    clearAnimations();
     
     // Handle different animation types
     if (currentAnimation.type === 'add' || currentAnimation.type === 'check') {
@@ -60,19 +56,21 @@ const AnimationArea: React.FC<AnimationAreaProps> = memo(({
       );
     }
     
-    // No cleanup here so processedAnimationRef remains until next animation or unmount
+    // We removed the processedAnimationRef check to allow replaying the same animation
     return;
-  }, [isAnimating, currentAnimation, bloomArrayRef, animateAddWord]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isAnimating, currentAnimation, bloomArrayRef]); // Removed clearAnimations from deps
 
   // Clean up animations when component unmounts
   useEffect(() => {
     return () => {
       clearAnimations();
     };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   return (
-    <div className={styles.animationArea} ref={animationAreaRef}>
+    <div className="h-32 mb-5 relative bg-slate-50 rounded-lg overflow-visible" ref={animationAreaRef}>
       {/* Animated lines */}
       {lines.map((line) => (
         <AnimatedLine
@@ -91,9 +89,8 @@ const AnimationArea: React.FC<AnimationAreaProps> = memo(({
       {labels.map((label) => (
         <div
           key={label.id}
-          className={styles.hashLabel}
+          className="absolute bg-white px-2 py-1 rounded shadow-sm text-sm z-10 min-w-20 text-center mt-1 whitespace-nowrap overflow-hidden text-ellipsis"
           style={{
-            position: 'absolute',
             top: `${label.top}px`,
             left: label.left,
             transform: 'translateX(-50%)'

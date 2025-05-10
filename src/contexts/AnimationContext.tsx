@@ -19,6 +19,9 @@ interface AnimationContextType {
   // Animation speed
   animationSpeed: number;
   setAnimationSpeed: (speed: number) => void;
+  
+  // Replay functionality
+  replayLastAnimation: () => void;
 }
 
 // Create the context with default values
@@ -44,6 +47,12 @@ export const AnimationProvider: React.FC<AnimationProviderProps> = ({ children }
   const [focusTarget, setFocusTarget] = useState<FocusTarget>(FocusTarget.NONE);
   const [animationSpeed, setAnimationSpeed] = useState(1);
   
+  // Function to replay the last animation
+  const replayLastAnimation = () => {
+    // This is a placeholder function that will be implemented by consumers
+    // The BloomFilterContext will provide the actual implementation
+  };
+  
   // Context value
   const value = {
     isAnimating,
@@ -51,7 +60,8 @@ export const AnimationProvider: React.FC<AnimationProviderProps> = ({ children }
     focusTarget,
     setFocusTarget,
     animationSpeed,
-    setAnimationSpeed
+    setAnimationSpeed,
+    replayLastAnimation
   };
   
   return (
