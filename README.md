@@ -1,5 +1,11 @@
 # Bloom Filter Visualizer
 
+> **Challenge to the Owner:**
+> 
+> This project was created as a unique challenge: to build a complete, interactive Bloom Filter visualizer using only AI agents (like GitHub Copilot or similar tools), without writing code manually. The goal was to see if an agent-driven workflow could produce a modern, maintainable, and feature-rich application from scratch, even when the developer did not fully understand all implementation details at the outset.
+> 
+> If you're reading this and are the owner, consider continuing the experiment—try to make all future changes and features using only agent assistance, and see how far you can push the boundaries of agent-driven software development!
+
 A modern, interactive visualization of Bloom Filters implemented in React with TypeScript and Vite. This application demonstrates how Bloom Filters work with animated visualizations.
 
 ## Features
