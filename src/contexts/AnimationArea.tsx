@@ -48,7 +48,7 @@ const AnimationArea: React.FC<AnimationAreaProps> = memo(({
       
       // Get bit elements
       const bitElements = Array.from(
-        bloomArrayRef.current.querySelectorAll('.bit')
+        bloomArrayRef.current.querySelectorAll('.bit-element')
       ) as HTMLElement[];
       
       // Run the animation
@@ -60,8 +60,13 @@ const AnimationArea: React.FC<AnimationAreaProps> = memo(({
       );
     }
     
-    // No cleanup here so processedAnimationRef remains until next animation or unmount
-    return;
+    // Clean up when unmounting or when animation changes
+    return () => {
+      // Reset the processed animation ref if this effect is cleaning up
+      if (processedAnimationRef.current === currentAnimation?.id) {
+        processedAnimationRef.current = null;
+      }
+    };
   }, [isAnimating, currentAnimation, bloomArrayRef, animateAddWord]);
 
   // Clean up animations when component unmounts
@@ -69,7 +74,7 @@ const AnimationArea: React.FC<AnimationAreaProps> = memo(({
     return () => {
       clearAnimations();
     };
-  }, []);
+  }, [clearAnimations]);
 
   return (
     <div className={styles.animationArea} ref={animationAreaRef}>
@@ -81,7 +86,7 @@ const AnimationArea: React.FC<AnimationAreaProps> = memo(({
           startY={line.startY}
           angle={line.angle}
           distance={line.distance}
-          duration={600}
+          duration={300}
           color="#4285f4"
           thickness={2}
         />
@@ -104,6 +109,8 @@ const AnimationArea: React.FC<AnimationAreaProps> = memo(({
       ))}
     </div>
   );
+};
+
 });
 
 export default AnimationArea;

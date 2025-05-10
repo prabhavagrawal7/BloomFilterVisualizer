@@ -22,8 +22,7 @@ The filter uses multiple hash functions to map each element to several positions
 
 ### Prerequisites
 
-- Node.js 14.0 or higher
-- npm or Bun (for faster performance)
+- Bun 1.0 or higher
 
 ### Installation
 
@@ -35,8 +34,6 @@ cd bloom-filter-visualizer
 
 2. Install dependencies:
 ```bash
-npm install
-# or with Bun for faster installation
 bun install
 ```
 
@@ -48,32 +45,20 @@ The easiest way to run the application is to use the included script:
 ./run.sh
 ```
 
-This script will automatically detect if Bun is available and use it for better performance, or fall back to npm if Bun is not installed.
+This script will automatically use Bun to run the application.
 
 Alternatively, you can run it directly with:
 
-#### Using npm:
 ```bash
-npm run dev
-```
-
-#### Using Bun (faster):
-```bash
-bun run dev:bun
+bun run dev
 ```
 
 The application will be available at http://localhost:5173
 
 ### Building for production
 
-#### Using npm:
 ```bash
-npm run build
-```
-
-#### Using Bun (faster):
-```bash
-bun run build:bun
+bun run build
 ```
 
 ## Implementation Details

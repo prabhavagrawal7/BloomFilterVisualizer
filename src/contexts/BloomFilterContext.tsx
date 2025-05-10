@@ -1,16 +1,13 @@
 import React, { createContext, useContext, useRef, useState, useEffect, ReactNode } from 'react';
 import { BloomFilter, BloomFilterState } from '../utils/BloomFilter';
 import { HistoryManager, HistoryEntry } from '../utils/HistoryManager';
+import { useAnimation, FocusTarget } from './AnimationContext';
 
 interface BloomFilterContextType {
   bloomFilter: BloomFilter;
   historyManager: HistoryManager;
   currentAnimation: HistoryEntry | null;
   setCurrentAnimation: (animation: HistoryEntry | null) => void;
-  isAnimating: boolean;
-  setIsAnimating: (isAnimating: boolean) => void;
-  animationSpeed: number;
-  setAnimationSpeed: (speed: number) => void;
   filterState: BloomFilterState;
   updateFilterState: () => void;
   resetFilter: () => void;
@@ -42,11 +39,16 @@ export const BloomFilterProvider: React.FC<BloomFilterProviderProps> = ({
   initialSize = 32, 
   initialHashFunctions = 3 
 }) => {
+  // Use the animation context for animation-related state
+  const { 
+    isAnimating, 
+    setIsAnimating,
+    setFocusTarget 
+  } = useAnimation();
+  
   const bloomFilterRef = useRef(new BloomFilter(initialSize, initialHashFunctions));
   const historyManagerRef = useRef(new HistoryManager());
   const [currentAnimation, setCurrentAnimation] = useState<HistoryEntry | null>(null);
-  const [isAnimating, setIsAnimating] = useState(false);
-  const [animationSpeed, setAnimationSpeed] = useState(1);
   const [filterState, setFilterState] = useState<BloomFilterState>(bloomFilterRef.current.getState());
 
   const updateFilterState = () => {
@@ -104,9 +106,10 @@ export const BloomFilterProvider: React.FC<BloomFilterProviderProps> = ({
         `Added word "${word}" to the filter`
       );
       
-      // Set current animation
+      // Set current animation and mark ADD as the focus target when animation ends
       setCurrentAnimation(animationEntry);
       setIsAnimating(true);
+      setFocusTarget(FocusTarget.ADD);
       
       return true;
     }
@@ -133,9 +136,10 @@ export const BloomFilterProvider: React.FC<BloomFilterProviderProps> = ({
       `Checked if word "${word}" exists in the filter`
     );
     
-    // Set current animation
+    // Set current animation and mark CHECK as the focus target when animation ends
     setCurrentAnimation(animationEntry);
     setIsAnimating(true);
+    setFocusTarget(FocusTarget.CHECK);
     
     return { mightContain, definitelyContains };
   };
@@ -168,10 +172,6 @@ export const BloomFilterProvider: React.FC<BloomFilterProviderProps> = ({
     historyManager: historyManagerRef.current,
     currentAnimation,
     setCurrentAnimation,
-    isAnimating,
-    setIsAnimating,
-    animationSpeed,
-    setAnimationSpeed,
     filterState,
     updateFilterState,
     resetFilter,

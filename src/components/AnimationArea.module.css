@@ -25,4 +25,10 @@
   font-size: 14px;
   z-index: 10;
   transform: translateX(-50%);
+  min-width: 80px;
+  text-align: center;
+  margin-top: 3px;
+  white-space: nowrap; /* Prevent text from wrapping */
+  overflow: hidden;    /* Hide overflowing text */
+  text-overflow: ellipsis; /* Show ellipsis for overflowing text */
 }

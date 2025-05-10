@@ -1,6 +1,7 @@
 import { useState, useRef } from 'react'
 import './App.css'
 import { BloomFilterProvider } from './contexts/BloomFilterContext'
+import { AnimationProvider } from './contexts/AnimationContext'
 import ControlPanel from './components/ControlPanel'
 import BloomArray from './components/BloomArray'
 import AnimationArea from './components/AnimationArea'
@@ -13,7 +14,7 @@ import type { BloomArrayHandle } from './components/BloomArray'
 // Component that uses the BloomFilter context
 function BloomFilterVisualizer() {
   const [activeTab, setActiveTab] = useState<'main' | 'history'>('main');
-  const { filterState, isAnimating } = useBloomFilter();
+  const { filterState } = useBloomFilter();
   const bloomArrayRef = useRef<BloomArrayHandle>(null);
 
   const handleTabChange = (tab: 'main' | 'history') => {
@@ -40,7 +41,6 @@ function BloomFilterVisualizer() {
               ref={bloomArrayRef} 
             />
             <AnimationArea 
-              isAnimating={isAnimating}
               bloomArrayRef={bloomArrayRef.current ? 
                 { current: bloomArrayRef.current.getBitElements()[0]?.parentElement as HTMLDivElement } : 
                 undefined} 
@@ -80,9 +80,11 @@ function BloomFilterVisualizer() {
 
 function App() {
   return (
-    <BloomFilterProvider initialSize={32} initialHashFunctions={3}>
-      <BloomFilterVisualizer />
-    </BloomFilterProvider>
+    <AnimationProvider>
+      <BloomFilterProvider initialSize={32} initialHashFunctions={3}>
+        <BloomFilterVisualizer />
+      </BloomFilterProvider>
+    </AnimationProvider>
   )
 }
 

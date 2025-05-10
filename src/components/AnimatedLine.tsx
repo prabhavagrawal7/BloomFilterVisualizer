@@ -24,13 +24,15 @@ const AnimatedLine: React.FC<AnimatedLineProps> = ({
   
   useEffect(() => {
     // Start animation after a short delay to ensure mounting is complete
-    const animationId = requestAnimationFrame(() => {
-      setWidth(distance);
-    });
+    const animationId = setTimeout(() => {
+      requestAnimationFrame(() => {
+        setWidth(distance);
+      });
+    }, 50); // Small delay before animation starts
     
     // Clean up animation frame on unmount
     return () => {
-      cancelAnimationFrame(animationId);
+      clearTimeout(animationId);
     };
   }, [distance]);
   

@@ -1,10 +1,22 @@
-import React, { useState, useRef, useEffect } from 'react';
+import React, { useState, useRef, useEffect, memo } from 'react';
 import { useBloomFilter } from '../contexts/BloomFilterContext';
+import { useAnimation } from '../contexts/AnimationContext';
+import { FocusTarget } from '../contexts/AnimationContext';
 import AnimationArea from './AnimationArea';
 import styles from './CheckWordSection.module.css';
 
-const CheckWordSection: React.FC = () => {
-  const { checkWord, isAnimating } = useBloomFilter();
+// Use memo to prevent unnecessary re-renders
+const CheckWordSection: React.FC = memo(() => {
+  const { 
+    checkWord
+  } = useBloomFilter();
+  
+  const {
+    isAnimating,
+    focusTarget,
+    setFocusTarget
+  } = useAnimation();
+  
   const [wordToCheck, setWordToCheck] = useState('');
   const [result, setResult] = useState<{
     word: string;
@@ -12,6 +24,7 @@ const CheckWordSection: React.FC = () => {
     definitelyContains: boolean;
   } | null>(null);
   const bloomArrayRef = useRef<HTMLDivElement>(null);
+  const [shouldFocusInput, setShouldFocusInput] = useState(false);
 
   // Track previous animation state to detect when animation completes
   const prevAnimatingRef = useRef(isAnimating);
@@ -19,18 +32,27 @@ const CheckWordSection: React.FC = () => {
   useEffect(() => {
     // Detect when animation finishes (transition from animating to not animating)
     if (prevAnimatingRef.current && !isAnimating) {
-      // Animation just finished - input should now be enabled
+      // Animation just finished - set focus flag if this section was active 
+      if (focusTarget === FocusTarget.CHECK) {
+        // First reset the focus target
+        setFocusTarget(FocusTarget.NONE);
+        
+        // Use setTimeout to ensure state updates have been processed
+        setTimeout(() => {
+          setShouldFocusInput(true);
+        }, 0);
+      }
     }
     
     // Update ref to current state
     prevAnimatingRef.current = isAnimating;
-  }, [isAnimating]);
-
-  const handleCheckWord = () => {
+  }, [isAnimating, focusTarget, setFocusTarget]);
+  
+  const handleCheckWord = React.useCallback(() => {
     const word = wordToCheck.trim();
     if (!word || isAnimating) return;
     
-    // Check the word - this also triggers animation via context
+    // Check the word - animation is handled by context
     const { mightContain, definitelyContains } = checkWord(word);
     
     // Store result for display
@@ -42,13 +64,15 @@ const CheckWordSection: React.FC = () => {
     
     // Clear input for next word
     setWordToCheck('');
-  };
+  }, [wordToCheck, isAnimating, checkWord, setResult, setWordToCheck]);
 
-  const handleKeyPress = (e: React.KeyboardEvent) => {
+  // Use useCallback for stable function reference to prevent unnecessary re-renders
+  const handleKeyDown = React.useCallback((e: React.KeyboardEvent) => {
     if (e.key === 'Enter' && !isAnimating) {
+      e.preventDefault(); // Prevent default behavior
       handleCheckWord();
     }
-  };
+  }, [isAnimating, handleCheckWord]);
 
   const getResultClass = () => {
     if (!result) return '';
@@ -75,10 +99,20 @@ const CheckWordSection: React.FC = () => {
         <input 
           type="text" 
           value={wordToCheck}
-          onChange={(e) => setWordToCheck(e.target.value)}
-          onKeyPress={handleKeyPress}
+          onChange={React.useCallback((e: React.ChangeEvent<HTMLInputElement>) => 
+            setWordToCheck(e.target.value), [setWordToCheck])}
+          onKeyDown={handleKeyDown}
           placeholder="Enter a word to check..."
           disabled={isAnimating} 
+          autoFocus={shouldFocusInput}
+          onFocus={React.useCallback(() => {
+            if (!isAnimating) {
+              setFocusTarget(FocusTarget.CHECK);
+              if (shouldFocusInput) {
+                setShouldFocusInput(false);
+              }
+            }
+          }, [isAnimating, setFocusTarget, shouldFocusInput, setShouldFocusInput])}
         />
         <button 
           onClick={handleCheckWord} 
@@ -102,6 +136,6 @@ const CheckWordSection: React.FC = () => {
       </div>
     </div>
   );
-};
+});
 
 export default CheckWordSection;

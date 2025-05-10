@@ -1,5 +1,8 @@
-import React, { useState, useRef, useEffect } from 'react';
+// filepath: /workspaces/BloomFilterVisualizer/src/components/WordsSection.tsx
+import React, { useState, useEffect, memo } from 'react';
 import { useBloomFilter } from '../contexts/BloomFilterContext';
+import { useAnimation } from '../contexts/AnimationContext';
+import { FocusTarget } from '../contexts/AnimationContext';
 import styles from './WordsSection.module.css';
 
 interface AnimationState {
@@ -8,14 +11,28 @@ interface AnimationState {
   isAnimating: boolean;
 }
 
-const WordsSection: React.FC = () => {
-  const { addWord, removeWord, filterState, bloomFilter, isAnimating, setIsAnimating } = useBloomFilter();
+// Use memo to prevent unnecessary re-renders
+const WordsSection: React.FC = memo(() => {
+  const { 
+    addWord, 
+    removeWord, 
+    filterState, 
+    bloomFilter 
+  } = useBloomFilter();
+  
+  const {
+    isAnimating,
+    focusTarget,
+    setFocusTarget
+  } = useAnimation();
+  
   const [newWord, setNewWord] = useState('');
   const [errorMessage, setErrorMessage] = useState('');
   const [animation, setAnimation] = useState<AnimationState | null>(null);
-  const bloomArrayRef = useRef<HTMLDivElement>(null);
+  const [shouldFocusInput, setShouldFocusInput] = useState(false);
 
-  const handleAddWord = () => {
+  // Use useCallback for stable function references
+  const handleAddWord = React.useCallback(() => {
     const word = newWord.trim();
     if (!word) {
       setErrorMessage('Please enter a word');
@@ -37,10 +54,7 @@ const WordsSection: React.FC = () => {
       isAnimating: true
     });
 
-    // Set global animation state
-    setIsAnimating(true);
-
-    // Add word to the filter
+    // Add word to the filter - the animation will be handled by BloomFilterContext
     const success = addWord(word);
     if (success) {
       setNewWord('');
@@ -48,23 +62,40 @@ const WordsSection: React.FC = () => {
     } else {
       setErrorMessage(`Word "${word}" is already in the filter.`);
       setAnimation(null);
-      setIsAnimating(false);
     }
-  };
+  }, [newWord, filterState.words, bloomFilter, addWord, setNewWord, setErrorMessage, setAnimation]);
 
   // Clear animation state after global animation state changes
   useEffect(() => {
-    if (!isAnimating && animation?.isAnimating) {
+    // Track the previous animation state
+    const prevIsAnimating = animation?.isAnimating;
+    
+    // When animation finishes (was animating but now isn't)
+    if (!isAnimating && prevIsAnimating) {
       // Reset animation state when animation completes
       setAnimation(null);
-    }
-  }, [isAnimating, animation]);
 
-  const handleKeyPress = (e: React.KeyboardEvent) => {
-    if (e.key === 'Enter') {
+      // Set focus flag if the last action was from this component
+      if (focusTarget === FocusTarget.ADD) {
+        // Reset focus target first
+        setFocusTarget(FocusTarget.NONE);
+        
+        // Then set focus flag - use setTimeout to ensure state updates have been processed
+        setTimeout(() => {
+          setShouldFocusInput(true);
+        }, 0);
+      }
+    }
+  }, [isAnimating, animation, focusTarget, setFocusTarget]);
+
+  // Use useCallback for stable function reference to prevent unnecessary re-renders
+  const handleKeyDown = React.useCallback((e: React.KeyboardEvent) => {
+    // Only handle Enter key press and ignore if animation is in progress
+    if (e.key === 'Enter' && !isAnimating) {
+      e.preventDefault(); // Prevent default behavior
       handleAddWord();
     }
-  };
+  }, [isAnimating, handleAddWord]);
 
   return (
     <div className={styles.column}>
@@ -73,10 +104,20 @@ const WordsSection: React.FC = () => {
         <input 
           type="text" 
           value={newWord}
-          onChange={(e) => setNewWord(e.target.value)}
-          onKeyPress={handleKeyPress}
+          onChange={React.useCallback((e: React.ChangeEvent<HTMLInputElement>) => 
+            setNewWord(e.target.value), [setNewWord])}
+          onKeyDown={handleKeyDown}
           placeholder="Enter a word to add..."
           disabled={isAnimating}
+          autoFocus={shouldFocusInput}
+          onFocus={React.useCallback(() => {
+            if (!isAnimating) {
+              setFocusTarget(FocusTarget.ADD);
+              if (shouldFocusInput) {
+                setShouldFocusInput(false);
+              }
+            }
+          }, [isAnimating, setFocusTarget, shouldFocusInput, setShouldFocusInput])}
         />
         <button 
           onClick={handleAddWord} 
@@ -113,6 +154,6 @@ const WordsSection: React.FC = () => {
       </div>
     </div>
   );
-};
+});
 
 export default WordsSection;
