@@ -2,7 +2,7 @@ export interface HistoryEntry {
     id: string;
     timestamp: string;
     type: 'add' | 'check' | 'remove' | 'reset' | 'update';
-    data: any;
+    data: unknown;
     description: string;
 }
 
@@ -16,7 +16,7 @@ export class HistoryManager {
     }
 
     // Add entry to history
-    addEntry(type: HistoryEntry['type'], data: any, description: string): HistoryEntry {
+    addEntry(type: HistoryEntry['type'], data: unknown, description: string): HistoryEntry {
         const entry = {
             id: Date.now() + Math.random().toString(36).substring(2, 9),
             timestamp: new Date().toLocaleTimeString(),

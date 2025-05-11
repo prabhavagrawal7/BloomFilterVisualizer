@@ -1,6 +1,5 @@
 import { useEffect, useRef, useState, useCallback } from 'react';
-import { useBloomFilter } from '../contexts/BloomFilterContext';
-import { useAnimation } from '../contexts/AnimationContext';
+import { useAnimation as useAnimationContext } from '../contexts/AnimationContext';
 
 // Define types for animation elements
 export interface LineConfig {
@@ -19,8 +18,7 @@ export interface LabelConfig {
 }
 
 export function useAnimationEffects() {
-  const { currentAnimation } = useBloomFilter();
-  const { animationSpeed, setIsAnimating } = useAnimation();
+  const { animationSpeed, setIsAnimating } = useAnimationContext();
   
   // Use React state instead of DOM manipulation
   const [lines, setLines] = useState<LineConfig[]>([]);
@@ -169,24 +167,21 @@ export function useAnimationEffects() {
 
       // End animation after all bits are highlighted with a more consistent timing
       timeoutRef.current = window.setTimeout(() => {
-        // Add an additional delay to keep animations visible for a moment
-        // but without the unnecessary nesting
-        setTimeout(() => {
-          // Use requestAnimationFrame to sync with browser rendering cycle
-          requestAnimationFrame(() => {
-            // Clear animations in a single call
-            setLines([]);
-            setLabels([]);
-            setHighlightedBits([]);
-            
-            // Clean up references
-            timeoutRef.current = null;
-            isAnimatingRef.current = false;
-            
-            // Update animation state
-            setIsAnimating(false);
-          });
-        }, 500); // Reduced from 1000ms to 500ms for better responsiveness while still showing animation
+        // Use requestAnimationFrame to sync with browser rendering cycle for smooth clearing
+        requestAnimationFrame(() => {
+          // Clear animations in a single call
+          setLines([]);
+          setLabels([]);
+          setHighlightedBits([]);
+          
+          // Clean up references
+          timeoutRef.current = null;
+          isAnimatingRef.current = false;
+          
+          // Update animation state
+          setIsAnimating(false);
+        });
+        // Delay removed: animations now clear immediately after the main sequence completes
       }, baseDelay + (hashPositions.length * sequenceDelay) + 600) as unknown as number;
     };
 

@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
-import { useBloomFilter } from '../contexts/BloomFilterContext';
+import { useAnimation as useAnimationContext } from '../contexts/AnimationContext';
 
 // Define types for animation elements
 interface LineConfig {
@@ -19,10 +19,9 @@ interface LabelConfig {
 
 export function useAnimation() {
   const { 
-    animationSpeed, 
-    isAnimating, 
-    setIsAnimating 
-  } = useBloomFilter();
+    animationSpeed,
+    setIsAnimating
+  } = useAnimationContext();
   
   // Use React state instead of DOM manipulation
   const [lines, setLines] = useState<LineConfig[]>([]);

@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useRef, useState, useEffect, ReactNode } from 'react';
+import React, { createContext, useContext, useRef, useState, ReactNode } from 'react';
 import { BloomFilter, BloomFilterState } from '../utils/BloomFilter';
 import { HistoryManager, HistoryEntry } from '../utils/HistoryManager';
 import { useAnimation, FocusTarget } from './AnimationContext';
