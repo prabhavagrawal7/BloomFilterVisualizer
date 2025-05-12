@@ -1,18 +1,20 @@
 {
   "name": "bloom-filter-visualizer",
+  "homepage": "https://prabhavagrawal7.github.io/BloomFilterVisualizer",
   "private": true,
   "version": "1.0.0",
   "type": "module",
   "scripts": {
-    "dev": "vite",
-    "build": "tsc && vite build",
+    "dev:bun": "bun run vite",
+    "dev": "bun run vite",
+    "build": "bun run tsc && bun run vite build",
     "lint": "eslint .",
-    "preview": "vite preview",
-    "dev:bun": "bun run --bun vite",
-    "build:bun": "bun run tsc && bun run vite build",
-    "preview:bun": "bun run vite preview"
+    "preview": "bun run vite preview",
+    "deploy": "gh-pages -d dist"
   },
   "dependencies": {
+    "@tailwindcss/postcss": "^4.1.6",
+    "gh-pages": "^6.3.0",
     "react": "^18.3.1",
     "react-dom": "^18.3.1",
     "typescript-eslint": "^8.32.0"
@@ -31,6 +33,7 @@
     "globals": "^15.15.0",
     "postcss": "^8.5.3",
     "tailwindcss": "^4.1.6",
+    "terser": "^5.39.0",
     "typescript": "^5.8.3",
     "vite": "^5.4.19"
   }
