@@ -84,6 +84,38 @@ This application is built using:
 - `src/hooks/`: Custom React hooks
 - `src/utils/`: Utility classes and functions
 
+## Deployment
+
+This project is set up for easy deployment to GitHub Pages with two methods:
+
+### Method 1: Automated Deployment (Recommended)
+
+The project includes a GitHub Actions workflow that automatically builds and deploys to GitHub Pages when you push to the main branch. The workflow:
+
+1. Installs dependencies using Bun
+2. Builds the project for production
+3. Deploys to GitHub Pages
+
+Simply push your changes to the main branch and the site will be automatically deployed to:
+**https://prabhavagrawal7.github.io/BloomFilterVisualizer**
+
+### Method 2: Manual Deployment
+
+You can also deploy manually using the gh-pages package:
+
+```bash
+# Build the project
+bun run build
+
+# Deploy to GitHub Pages
+bun run deploy
+```
+
+### Live Demo
+
+The application is deployed and available at:
+**https://prabhavagrawal7.github.io/BloomFilterVisualizer**
+
 ## License
 
 This project is licensed under the MIT License - see the LICENSE file for details.
