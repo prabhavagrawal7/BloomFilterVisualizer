@@ -6,10 +6,10 @@
   "type": "module",
   "scripts": {
     "dev:bun": "bun run vite",
-    "dev": "bun run vite",
-    "build": "bun run tsc && bun run vite build",
+    "dev": "vite",
+    "build": "tsc && vite build",
     "lint": "eslint .",
-    "preview": "bun run vite preview",
+    "preview": "vite preview",
     "deploy": "gh-pages -d dist"
   },
   "dependencies": {
