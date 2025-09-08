@@ -24,13 +24,11 @@ export default tseslint.config(
         { allowConstantExport: true },
       ],
     },
-    overrides: [
-      {
-        files: ['src/contexts/**/*.tsx'],
-        rules: {
-          'react-refresh/only-export-components': 'off'
-        }
-      }
-    ]
   },
+  {
+    files: ['src/contexts/**/*.tsx'],
+    rules: {
+      'react-refresh/only-export-components': 'off'
+    }
+  }
 )
